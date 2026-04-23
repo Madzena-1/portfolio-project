@@ -1,40 +1,27 @@
-from datetime import datetime
-
-def filter_active_jobs(jobs):
-    active_jobs = []
-    today = datetime.today()
-
-    for job in jobs:
-        expiry = datetime.strptime(job["expiry_date"], "%Y-%m-%d")
-        if expiry >= today:
-            active_jobs.append(job)
-
-    return active_jobs
-    from datetime import datetime
+import streamlit as st
 from transformers import pipeline
 
-# Load AI model once
-job_classifier = pipeline("text-classification")
+@st.cache_resource
+def load_model():
+    return pipeline(
+        "text-classification",
+        model="distilbert-base-uncased-finetuned-sst-2-english"
+    )
 
-def is_job_legit(job):
-    text = job["title"] + " " + job["company"]
+def analyze_job(text):
+    classifier = load_model()
+    result = classifier(text)[0]
 
-    result = job_classifier(text)[0]
+    label = result["label"]
+    score = result["score"]
 
-    # Very simple rule (we refine later)
-    if result["score"] > 0.5:
-        return True
-    return False
+    if score < 0.70:
+        decision = "⚠️ Suspicious Job"
+    else:
+        decision = "✅ Likely Legit Job"
 
-
-def filter_active_jobs(jobs):
-    active_jobs = []
-    today = datetime.today()
-
-    for job in jobs:
-        expiry = datetime.strptime(job["expiry_date"], "%Y-%m-%d")
-
-        if expiry >= today and is_job_legit(job):
-            active_jobs.append(job)
-
-    return active_jobs
+    return {
+        "label": label,
+        "confidence": round(score, 2),
+        "decision": decision
+    }
