@@ -15,7 +15,7 @@ def analyze_job(text):
     score = result["score"]
 
     # 🚨 RULE-BASED SCAM DETECTION
-    suspicious_keywords = [
+    suspicious_keywords = [= [
         "earn", "weekly", "no experience", "work from home",
         "urgent", "limited spots", "click here", "whatsapp"
     ]
