@@ -18,3 +18,4 @@ if st.button("Analyse Job"):
         st.subheader("Result")
         st.write("Decision:", result["decision"])
         st.write("Confidence:", result["confidence"])
+st.write("DEBUG: Running updated version")
