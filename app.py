@@ -2,36 +2,56 @@ import streamlit as st
 import json
 from filter import analyze_job
 
-st.title("💼 AI Job Search Tool")
+st.set_page_config(page_title="Job Platform", page_icon="💼")
 
-job_text = st.text_area("Enter job description")
-job_title = st.text_input("Job Title")
+st.title("💼 AI Job Platform")
 
-if "jobs" not in st.session_state:
-    st.session_state.jobs = []
+# Load jobs
+def load_jobs():
+    try:
+        with open("jobs.json", "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-if st.button("Analyse & Release Job"):
-    if job_text.strip() == "":
-        st.warning("Please enter a job description")
-    else:
-        result = analyze_job(job_text)
+def save_job(job):
+    jobs = load_jobs()
+    jobs.append(job)
 
-        st.write("Decision:", result["decision"])
+    with open("jobs.json", "w") as f:
+        json.dump(jobs, f, indent=2)
+
+# INPUT FORM
+title = st.text_input("Job Title")
+description = st.text_area("Job Description")
+
+if st.button("Submit Job"):
+    if title and description:
+        result = analyze_job(description)
+
+        st.write("AI Decision:", result["decision"])
         st.write("Confidence:", result["confidence"])
 
-        # 🚀 ONLY RELEASE IF LEGIT
-        if "Likely Legit" in result["decision"]:
+        if result["decision"] == "APPROVE":
             job = {
-                "title": job_title,
-                "description": job_text
+                "title": title,
+                "description": description
             }
 
-            st.session_state.jobs.append(job)
-            st.success("✅ Job released to listings!")
+            save_job(job)
+            st.success("✅ Job published successfully!")
+        else:
+            st.error("❌ Job rejected by AI filter")
 
-st.subheader("📢 Active Jobs")
+# DISPLAY JOBS
+st.subheader("📢 Active Job Listings")
 
-for job in st.session_state.jobs:
-    st.write("**Title:**", job["title"])
-    st.write(job["description"])
-    st.write("---")
+jobs = load_jobs()
+
+if len(jobs) == 0:
+    st.info("No jobs available yet.")
+else:
+    for job in jobs:
+        st.markdown("### " + job["title"])
+        st.write(job["description"])
+        st.write("---")
